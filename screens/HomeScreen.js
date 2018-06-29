@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Container, Header, Content, Footer, Title,
 		 Button, Text, Left, Right, Body, Icon, Card, CardItem } from 'native-base';
-import { FlatList, Modal, Image } from 'react-native';
+import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity } from 'react-native';
 
 import * as firebase from 'firebase'
 
@@ -69,14 +69,19 @@ export default class Home extends Component {
 						<Right />
 					</Header>
 					<Content>
-						<Text>Name: {this.state.currName}</Text>
-						<Text>Key: {this.state.currKey}</Text>
-						<Text>Loc: {this.state.currLocation}</Text>
-						<Text>Time: {this.state.currTime}</Text>
-						<Text>Photo URL: {this.state.currPhoto}</Text>
-						<Button onPress={()=>this.setState({modalVisible:false})}>
-							<Text>Cancel</Text>
-						</Button>
+						<Image
+							source={{uri: this.state.currPhoto}}
+							style={{height: 300, width: Dimensions.get('window').width, flex:1}}
+						/>
+						<View style={{
+				        	flexDirection: 'column',
+				        	padding: 20,
+				        }}>
+							<Text>Name: {this.state.currName}</Text>
+							<Text>Key: {this.state.currKey}</Text>
+							<Text>Loc: {this.state.currLocation}</Text>
+							<Text>Time: {this.state.currTime}</Text>
+						</View>
 					</Content>
 				</Modal>
 
@@ -101,21 +106,30 @@ export default class Home extends Component {
 						data = {this.state.posts}
 						
 						renderItem={({item}) =>
-							<Card>
-								<CardItem button onPress={()=> this.setState({
+							<TouchableOpacity onPress={()=> this.setState({
 											modalVisible:true,
 											currKey: item.key,
 											currPhoto: item.photo,
 											currName: item.name,
 											currLocation: item.location,
 											currTime: item.time,
-								})}>
-								<Body>
-									<Text>Loc: {item.location}</Text>
-									<Text>Time: {item.time}</Text>
-								</Body>
+								})}
+							>
+							<Card>
+								<CardItem cardBody>
+									<Image
+										source={{uri: item.photo}}
+										style={{height: 200, width: Dimensions.get('window').width, flex:1}}
+									/>
+								</CardItem>
+								<CardItem>
+									<Body>
+										<Text>Loc: {item.location}</Text>
+										<Text>Time: {item.time}</Text>
+									</Body>
 								</CardItem>
 							</Card>
+							</TouchableOpacity>
 						}
 					/>
 				</Content>
