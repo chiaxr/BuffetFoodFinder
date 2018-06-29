@@ -10,6 +10,12 @@ YellowBox.ignoreWarnings(['Warning: isMounted(...) is deprecated'])
 
 import * as firebase from 'firebase'
 
+import { StyleSheet, Platform, Image, Text, View } from 'react-native'
+import { createSwitchNavigator } from 'react-navigation'
+import Loading from './screens/Loading'
+import SignUp from './screens/SignUp'
+import Login from './screens/Login'
+
 const firebaseConfig = {
 	apiKey: "AIzaSyDt6LI3R70kjM2hT3bUFdHvHmjB7IUj9hA",
 	authDomain: "buffetfoodfinder.firebaseapp.com",
@@ -23,10 +29,23 @@ firebase.initializeApp(firebaseConfig);
 export default class App extends Component {
 	render() {
 		return (
-			<AppDrawerNavigator />
+			// <AppDrawerNavigator />
+			<AppSwitchNavigator />
 		);
 	}
 }
+
+const AppSwitchNavigator = createSwitchNavigator(
+  {
+    Loading,
+    SignUp,
+    Login,
+		HomeScreen
+  },
+  {
+    initialRouteName: 'Loading'
+  }
+)
 
 const AppDrawerNavigator = createDrawerNavigator({
 		Home: HomeScreen,
