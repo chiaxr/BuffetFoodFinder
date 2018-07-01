@@ -6,7 +6,7 @@ import MyPostsScreen from './screens/MyPostsScreen'
 import SettingsScreen from './screens/SettingsScreen'
 
 import { YellowBox } from 'react-native'
-YellowBox.ignoreWarnings(['Warning: isMounted(...) is deprecated'])
+YellowBox.ignoreWarnings(['Warning: isMounted(...) is deprecated','Setting a timer for a long period of time, i.e. multiple minutes'])
 
 import * as firebase from 'firebase'
 

@@ -1,29 +1,31 @@
 import React, { Component } from 'react';
 import { Container, Header, Content, Footer, Title,
-		Button, Text, Left, Right, Body, Icon, Card, CardItem } from 'native-base';
+		Button, Text, Left, Right, Body, Icon, Card, CardItem,
+		Form, Item, Label, Input } from 'native-base';
 import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity } from 'react-native';
 
 import * as firebase from 'firebase'
 
 export default class Home extends React.Component {
 	constructor(props) {
-		    super(props);
+	    super(props);
 
-		    this.state = {
-		    	currentUser: null,
-		    	loading: true,
-		    	modalVisible: false,
-		    	posts: [],
-		    	currKey: 0,
-		    	currPhoto: '',
-		    	currName: '',
-		    	currLocation: '',
-		    	currTime: 0
-		    };
+	    this.state = {
+	    	currUser: null,
+	    	loading: true,
+	    	addModal: false,
+	    	postModal: false,
+	    	posts: [],
+	    	currKey: 0,
+	    	currPhoto: '',
+	    	currName: '',
+	    	currLocation: '',
+	    	currTime: 0
+	    };
 	}
 
 	makeRemoteRequest = () => {
-	    firebase.database().ref('posts').on('value', (snap) => {
+	    firebase.database().ref('posts').once('value').then((snap) => {
 	        var items = [];
 	        this.getItems(snap, items);
 	        // items = items.reverse();
@@ -47,7 +49,7 @@ export default class Home extends React.Component {
 
 	componentDidMount() {
 		const user = firebase.auth()
-		this.setState({currentUser:user})
+		this.setState({currUser:user})
 		this.makeRemoteRequest();
 	}
 
@@ -55,14 +57,48 @@ export default class Home extends React.Component {
 		return (
 			<Container>
 				<Modal
-				animationType='fade'
+				animationType='slide'
 				transparent={false}
-				visible={this.state.modalVisible}
-				onRequestClose={()=>this.setState({modalVisible:false})}
+				visible={this.state.addModal}
+				onRequestClose={()=>this.setState({addModal:false})}
 				>
 					<Header>
 						<Left>
-							<Button transparent onPress={()=>this.setState({modalVisible:false})}>
+							<Button transparent onPress={()=>this.setState({addModal:false})}>
+								<Icon type='Entypo' name='chevron-left' />
+							</Button>
+						</Left>
+						<Body>
+							<Title>Add new post</Title>
+						</Body>
+						<Right />
+					</Header>
+					<Content>
+						<Form>
+							<Item stackedLabel>
+				            	<Label>Location</Label>
+				            	<Input />
+				            </Item>
+				            <Item stackedLabel>
+				            	<Label>Photo Link</Label>
+				            	<Input />
+				            </Item>
+						</Form>
+						<Button full onPress={()=>this.setState({addModal:false})}>
+							<Text>Submit</Text>
+						</Button>
+					</Content>
+				</Modal>
+
+				<Modal
+				animationType='fade'
+				transparent={false}
+				visible={this.state.postModal}
+				onRequestClose={()=>this.setState({postModal:false})}
+				>
+					<Header>
+						<Left>
+							<Button transparent onPress={()=>this.setState({postModal:false})}>
 								<Icon type='Entypo' name='chevron-left' />
 							</Button>
 						</Left>
@@ -98,7 +134,7 @@ export default class Home extends React.Component {
 						<Title>Home</Title>
 					</Body>
 					<Right>
-						<Button transparent>
+						<Button transparent onPress={()=>this.setState({addModal:true})}>
 							<Icon type='Entypo' name='plus' />
 						</Button>
 					</Right>
@@ -110,7 +146,7 @@ export default class Home extends React.Component {
 						
 						renderItem={({item}) =>
 							<TouchableOpacity onPress={()=> this.setState({
-								modalVisible:true,
+								postModal:true,
 								currKey: item.key,
 								currPhoto: item.photo,
 								currName: item.name,
