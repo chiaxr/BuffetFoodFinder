@@ -42,7 +42,7 @@ export default class SignUp extends React.Component {
         />
         <TextInput
           secureTextEntry
-          placeholder="Re-eneter password"
+          placeholder="Re-enter password"
           autoCapitalize="none"
           style={styles.textInput}
         />
