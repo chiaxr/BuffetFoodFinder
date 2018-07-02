@@ -11,26 +11,34 @@ export default class Home extends React.Component {
 	    super(props);
 
 	    this.state = {
-	    	currUser: null,
-	    	loading: true,
 	    	addModal: false,
 	    	postModal: false,
+
 	    	posts: [],
+	    	refreshing: false,
+
+	    	currUser: null,
 	    	currKey: 0,
 	    	currPhoto: '',
 	    	currName: '',
 	    	currLocation: '',
-	    	currTime: 0
+	    	currTime: '',
+	    	currDate: '',
+
+	    	addLocation: '',
+	    	addPhoto: ''
 	    };
 	}
 
 	makeRemoteRequest = () => {
-	    firebase.database().ref('posts').once('value').then((snap) => {
+	    firebase.database().ref('posts').on('value',(snap) => {
 	        var items = [];
 	        this.getItems(snap, items);
-	        // items = items.reverse();
-        	this.setState(
-	            {posts: items}
+	        items = items.reverse();
+        	this.setState({
+        		posts: items,
+        		refreshing: false,
+	        }
 	        );
 	    });
 	}
@@ -43,13 +51,18 @@ export default class Home extends React.Component {
                 name: child.val().name,
                 location: child.val().location,
                 time: child.val().time,
+                date: child.val().date,
             });
         });
     }
 
+    handleRefresh = () => {
+    	this.setState({refreshing:true});
+    }
+
 	componentDidMount() {
-		const user = firebase.auth()
-		this.setState({currUser:user})
+		const user = firebase.auth().currentUser;
+		this.setState({currUser:user.email});
 		this.makeRemoteRequest();
 	}
 
@@ -77,14 +90,25 @@ export default class Home extends React.Component {
 						<Form>
 							<Item stackedLabel>
 				            	<Label>Location</Label>
-				            	<Input />
+				            	<Input onChangeText={(addLocation) => this.setState({addLocation})} />
 				            </Item>
-				            <Item stackedLabel>
+				            <Item stackedLarrbel>
 				            	<Label>Photo Link</Label>
-				            	<Input />
+				            	<Input onChangeText={(addPhoto) => this.setState({addPhoto})} />
 				            </Item>
 						</Form>
-						<Button full onPress={()=>this.setState({addModal:false})}>
+
+						<Button full onPress={()=> {
+							this.setState({addModal:false});
+							var datetime = new Date();
+							firebase.database().ref('posts').push({
+								name: this.state.currUser,
+								location: this.state.addLocation,
+								photo: this.state.addPhoto,
+								date: datetime.getDate() + "/" + (datetime.getMonth()+1) + "/" + datetime.getFullYear(),
+								time: datetime.getHours() + ":" + ("00"+datetime.getMinutes()).slice(-2)
+							});
+						}}>
 							<Text>Submit</Text>
 						</Button>
 					</Content>
@@ -116,10 +140,10 @@ export default class Home extends React.Component {
 				        	flexDirection: 'column',
 				        	padding: 20,
 				        }}>
-							<Text>Name: {this.state.currName}</Text>
-							<Text>Key: {this.state.currKey}</Text>
 							<Text>Loc: {this.state.currLocation}</Text>
+							<Text>Posted by: {this.state.currName}</Text>
 							<Text>Time: {this.state.currTime}</Text>
+							<Text>Date: {this.state.currDate}</Text>
 						</View>
 					</Content>
 				</Modal>
@@ -143,7 +167,10 @@ export default class Home extends React.Component {
 				<Content>
 					<FlatList
 						data = {this.state.posts}
-						
+
+						refreshing = {this.state.refreshing}
+						onRefresh={this.handleRefresh}
+
 						renderItem={({item}) =>
 							<TouchableOpacity onPress={()=> this.setState({
 								postModal:true,
@@ -152,6 +179,7 @@ export default class Home extends React.Component {
 								currName: item.name,
 								currLocation: item.location,
 								currTime: item.time,
+								currDate: item.date,
 							})}>
 							<Card>
 								<CardItem cardBody>
