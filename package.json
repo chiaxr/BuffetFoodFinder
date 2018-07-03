@@ -12,7 +12,8 @@
     "react": "16.3.1",
     "react-native": "0.55.4",
     "react-native-image-crop-picker": "^0.20.3",
-    "react-navigation": "^2.2.3"
+    "react-navigation": "^2.2.3",
+    "rn-fetch-blob": "^0.10.11"
   },
   "devDependencies": {
     "babel-jest": "23.0.1",
