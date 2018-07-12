@@ -2,7 +2,10 @@ import React, { Component } from 'react';
 import { Container, Header, Content, Footer, Title,
 		Button, Text, Left, Right, Body, Icon, Card, CardItem,
 		Form, Item, Label, Input } from 'native-base';
-import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity } from 'react-native';
+import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity, Platform } from 'react-native';
+
+import ImagePicker from 'react-native-image-crop-picker'
+import RNFetchBlob from 'rn-fetch-blob'
 
 import * as firebase from 'firebase'
 
@@ -26,8 +29,51 @@ export default class Home extends React.Component {
 	    	currDate: '',
 
 	    	addLocation: '',
-	    	addPhoto: ''
+	    	addPhotoPath: '',
+	    	addPhotoURL: '',
+	    	addPhotoMime:''
 	    };
+	}
+
+	submitPost () {
+		const Blob = RNFetchBlob.polyfill.Blob
+	    const fs = RNFetchBlob.fs
+	    window.XMLHttpRequest = RNFetchBlob.polyfill.XMLHttpRequest
+	    window.Blob = Blob
+
+	    let datetime = new Date()
+	    const imagePath = this.state.addPhotoPath
+	    const sessionID = datetime.getTime();
+		let imageName = this.state.currUser + '_' + sessionID
+	    let uploadBlob = null
+
+		const imageRef = firebase.storage().ref('cardImages').child(`${imageName}`)
+	    let mime = this.state.addPhotoMime
+	    let loc = this.state.addLocation
+	    fs.readFile(imagePath, 'base64')
+	        .then((data) => {
+	          	return Blob.build(data, { type: `${mime};BASE64` })
+	      	})
+	        .then((blob) => {
+		        uploadBlob = blob
+		        return imageRef.put(blob, { contentType: mime })
+	        })
+	        .then(() => {
+		        uploadBlob.close()
+		        return imageRef.getDownloadURL()
+	        })
+			.then((url) => {
+				firebase.database().ref('posts').push({
+					name: this.state.currUser,
+					location: loc,
+					photo: url,
+					date: datetime.getDate() + "/" + (datetime.getMonth()+1) + "/" + datetime.getFullYear(),
+					time: datetime.getHours() + ":" + ("00"+datetime.getMinutes()).slice(-2)
+				})
+	        })
+	        .catch((error) => {
+	          	console.log(error)
+	        })
 	}
 
 	makeRemoteRequest = () => {
@@ -73,7 +119,13 @@ export default class Home extends React.Component {
 				animationType='slide'
 				transparent={false}
 				visible={this.state.addModal}
-				onRequestClose={()=>this.setState({addModal:false})}
+				onRequestClose={()=>this.setState({
+					addLocation:'',
+					addPhotoPath: '',
+			    	addPhotoURL: '',
+			    	addPhotoMime:'',
+					addModal:false
+					})}
 				>
 					<Header>
 						<Left>
@@ -90,23 +142,37 @@ export default class Home extends React.Component {
 						<Form>
 							<Item stackedLabel>
 				            	<Label>Location</Label>
-				            	<Input onChangeText={(addLocation) => this.setState({addLocation})} />
+				            	<Input onChangeText={(text) => this.setState({addLocation:text})} />
 				            </Item>
-				            <Item stackedLarrbel>
-				            	<Label>Photo Link</Label>
-				            	<Input onChangeText={(addPhoto) => this.setState({addPhoto})} />
+				            <Item stackedLabel>
+				            	<Label>Photo</Label>
+				            	<Button onPress={() => {
+				            		ImagePicker.openPicker({
+										compressImageQuality: 0.8,
+										mediaType: 'photo'
+									}).then(image => {
+										let path = image.path
+										let mime = image.mime
+										this.setState({
+											addPhotoPath:path,
+											addPhotoMime:mime
+										})
+									});
+								}}>
+				            		<Text>Select Photo</Text>
+				            	</Button>
 				            </Item>
 						</Form>
 
 						<Button full onPress={()=> {
-							this.setState({addModal:false});
-							var datetime = new Date();
-							firebase.database().ref('posts').push({
-								name: this.state.currUser,
-								location: this.state.addLocation,
-								photo: this.state.addPhoto,
-								date: datetime.getDate() + "/" + (datetime.getMonth()+1) + "/" + datetime.getFullYear(),
-								time: datetime.getHours() + ":" + ("00"+datetime.getMinutes()).slice(-2)
+							this.submitPost();
+
+							this.setState({
+								addLocation:'',
+								addPhotoPath: '',
+						    	addPhotoURL: '',
+						    	addPhotoMime:'',
+								addModal:false
 							});
 						}}>
 							<Text>Submit</Text>
@@ -158,7 +224,13 @@ export default class Home extends React.Component {
 						<Title>Home</Title>
 					</Body>
 					<Right>
-						<Button transparent onPress={()=>this.setState({addModal:true})}>
+						<Button transparent onPress={()=>this.setState({
+								addLocation:'',
+								addPhotoPath: '',
+						    	addPhotoURL: '',
+						    	addPhotoMime:'',
+								addModal:true
+						})}>
 							<Icon type='Entypo' name='plus' />
 						</Button>
 					</Right>
