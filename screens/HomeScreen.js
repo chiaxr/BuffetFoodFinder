@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import { Container, Header, Content, Footer, Title,
 		Button, Text, Left, Right, Body, Icon, Card, CardItem,
-		Form, Item, Label, Input } from 'native-base';
-import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity, Platform } from 'react-native';
+		Form, Item, Label, Input, Textarea } from 'native-base';
+import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity,
+		Platform, Linking } from 'react-native';
 
 import ImagePicker from 'react-native-image-crop-picker'
 import RNFetchBlob from 'rn-fetch-blob'
+import RNGooglePlacePicker from 'react-native-google-place-picker'
 
 import * as firebase from 'firebase'
 
@@ -27,11 +29,13 @@ export default class Home extends React.Component {
 	    	currLocation: '',
 	    	currTime: '',
 	    	currDate: '',
+	    	currRemarks: '',
 
-	    	addLocation: '',
+	    	addLocation: null,
 	    	addPhotoPath: '',
 	    	addPhotoURL: '',
-	    	addPhotoMime:''
+	    	addPhotoMime:'',
+	    	addRemarks: ''
 	    };
 	}
 
@@ -50,6 +54,7 @@ export default class Home extends React.Component {
 		const imageRef = firebase.storage().ref('cardImages').child(`${imageName}`)
 	    let mime = this.state.addPhotoMime
 	    let loc = this.state.addLocation
+	    let remarks = this.state.addRemarks
 	    fs.readFile(imagePath, 'base64')
 	        .then((data) => {
 	          	return Blob.build(data, { type: `${mime};BASE64` })
@@ -68,7 +73,8 @@ export default class Home extends React.Component {
 					location: loc,
 					photo: url,
 					date: datetime.getDate() + "/" + (datetime.getMonth()+1) + "/" + datetime.getFullYear(),
-					time: datetime.getHours() + ":" + ("00"+datetime.getMinutes()).slice(-2)
+					time: datetime.getHours() + ":" + ("00"+datetime.getMinutes()).slice(-2),
+					remarks: remarks
 				})
 	        })
 	        .catch((error) => {
@@ -98,6 +104,7 @@ export default class Home extends React.Component {
                 location: child.val().location,
                 time: child.val().time,
                 date: child.val().date,
+                remarks: child.val().remarks,
             });
         });
     }
@@ -120,10 +127,11 @@ export default class Home extends React.Component {
 				transparent={false}
 				visible={this.state.addModal}
 				onRequestClose={()=>this.setState({
-					addLocation:'',
+					addLocation:null,
 					addPhotoPath: '',
 			    	addPhotoURL: '',
 			    	addPhotoMime:'',
+			    	addRemarks: '',
 					addModal:false
 					})}
 				>
@@ -140,38 +148,64 @@ export default class Home extends React.Component {
 					</Header>
 					<Content>
 						<Form>
-							<Item stackedLabel>
-				            	<Label>Location</Label>
-				            	<Input onChangeText={(text) => this.setState({addLocation:text})} />
-				            </Item>
-				            <Item stackedLabel>
-				            	<Label>Photo</Label>
-				            	<Button onPress={() => {
-				            		ImagePicker.openPicker({
-										compressImageQuality: 0.8,
-										mediaType: 'photo'
-									}).then(image => {
-										let path = image.path
-										let mime = image.mime
-										this.setState({
-											addPhotoPath:path,
-											addPhotoMime:mime
-										})
-									});
-								}}>
-				            		<Text>Select Photo</Text>
-				            	</Button>
-				            </Item>
+			            	<Label>Location</Label>
+			            	{this.state.addLocation &&
+			            		<Text>{this.state.addLocation.name}</Text>
+			            	}
+			            	<Button onPress={() => {
+			            		RNGooglePlacePicker.show((response) => {
+									if (response.didCancel) {
+										console.log('User cancelled GooglePlacePicker');
+									}
+									else if (response.error) {
+								 		console.log('GooglePlacePicker Error: ', response.error);
+									}
+									else {
+										this.setState({addLocation: response});
+									}
+								})
+			            	}}>
+			            		<Text>Select Location</Text>
+			            	</Button>
+
+			            	<Label>Photo</Label>
+			            	{this.state.addPhotoPath !== '' &&
+			            		<Text>Image selected</Text>
+			            	}
+			            	<Button onPress={() => {
+			            		ImagePicker.openPicker({
+									compressImageQuality: 0.8,
+									mediaType: 'photo'
+								}).then(image => {
+									let path = image.path
+									let mime = image.mime
+									this.setState({
+										addPhotoPath:path,
+										addPhotoMime:mime
+									})
+								});
+							}}>
+			            		<Text>Select Photo</Text>
+			            	</Button>
+
+			            	<Label>Remarks</Label>
+			            	<Textarea
+			            		rowSpan={5}
+			            		bordered placeholder="Any additional details e.g. room no, floor, landmarks"
+			            		value={this.state.addRemarks}
+			            		onChangeText={(text) => this.setState({addRemarks:text})}
+			            	/>
 						</Form>
 
 						<Button full onPress={()=> {
 							this.submitPost();
 
 							this.setState({
-								addLocation:'',
+								addLocation: null,
 								addPhotoPath: '',
 						    	addPhotoURL: '',
 						    	addPhotoMime:'',
+						    	addRemarks: '',
 								addModal:false
 							});
 						}}>
@@ -206,10 +240,28 @@ export default class Home extends React.Component {
 				        	flexDirection: 'column',
 				        	padding: 20,
 				        }}>
-							<Text>Loc: {this.state.currLocation}</Text>
+							<Text onPress={() => {
+								let maps_url = 'https://www.google.com/maps/search/?api=1&query=' +
+												this.state.currLocation.latitude + ',' +
+												this.state.currLocation.longitude + '&query_place_id=' +
+												this.state.currLocation.google_id;		
+								Linking.openURL(maps_url);
+							}}>
+								Location: {this.state.currLocation.name}
+							</Text>
+							<Text onPress={() => {
+								let maps_url = 'https://www.google.com/maps/search/?api=1&query=' +
+												this.state.currLocation.latitude + ',' +
+												this.state.currLocation.longitude + '&query_place_id=' +
+												this.state.currLocation.google_id;		
+								Linking.openURL(maps_url);
+							}}>
+								Address: {this.state.currLocation.address}
+							</Text>
 							<Text>Posted by: {this.state.currName}</Text>
 							<Text>Time: {this.state.currTime}</Text>
 							<Text>Date: {this.state.currDate}</Text>
+							<Text>Remarks: {this.state.currRemarks}</Text>
 						</View>
 					</Content>
 				</Modal>
@@ -225,10 +277,11 @@ export default class Home extends React.Component {
 					</Body>
 					<Right>
 						<Button transparent onPress={()=>this.setState({
-								addLocation:'',
+								addLocation:null,
 								addPhotoPath: '',
 						    	addPhotoURL: '',
 						    	addPhotoMime:'',
+						    	addRemarks: '',
 								addModal:true
 						})}>
 							<Icon type='Entypo' name='plus' />
@@ -252,6 +305,7 @@ export default class Home extends React.Component {
 								currLocation: item.location,
 								currTime: item.time,
 								currDate: item.date,
+								currRemarks: item.remarks
 							})}>
 							<Card>
 								<CardItem cardBody>
@@ -262,7 +316,7 @@ export default class Home extends React.Component {
 								</CardItem>
 								<CardItem>
 									<Body>
-										<Text>Loc: {item.location}</Text>
+										<Text>Loc: {item.location.name}</Text>
 										<Text>Time: {item.time}</Text>
 									</Body>
 								</CardItem>
