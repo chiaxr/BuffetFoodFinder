@@ -6,3 +6,5 @@
 - Firebase
 - React Native Image Crop Picker
 - RN Fetch Blob
+- React Native Google Place Picker
+	- Remove '@Override' in RNGooglePlacePickerPackage.java
