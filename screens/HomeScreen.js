@@ -8,6 +8,7 @@ import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity,
 import ImagePicker from 'react-native-image-crop-picker'
 import RNFetchBlob from 'rn-fetch-blob'
 import RNGooglePlacePicker from 'react-native-google-place-picker'
+import DateTimePicker from 'react-native-modal-datetime-picker'
 
 import * as firebase from 'firebase'
 
@@ -18,20 +19,25 @@ export default class Home extends React.Component {
 	    this.state = {
 	    	addModal: false,
 	    	postModal: false,
+	    	DateTimePickerModal: false,
 
 	    	posts: [],
 	    	refreshing: false,
 
+	    	currServerTime: null,
 	    	currUser: null,
 	    	currKey: 0,
 	    	currPhoto: '',
 	    	currName: '',
 	    	currLocation: '',
-	    	currTime: '',
-	    	currDate: '',
+	    	currDateTime: new Date(),
+	    	currEndTime: new Date(),
 	    	currRemarks: '',
+	    	currComments: null,
+	    	currNewComment: '',
 
 	    	addLocation: null,
+	    	addEndTime: 0,
 	    	addPhotoPath: '',
 	    	addPhotoURL: '',
 	    	addPhotoMime:'',
@@ -55,6 +61,7 @@ export default class Home extends React.Component {
 	    let mime = this.state.addPhotoMime
 	    let loc = this.state.addLocation
 	    let remarks = this.state.addRemarks
+	    let endtime = this.state.addEndTime
 	    fs.readFile(imagePath, 'base64')
 	        .then((data) => {
 	          	return Blob.build(data, { type: `${mime};BASE64` })
@@ -72,8 +79,8 @@ export default class Home extends React.Component {
 					name: this.state.currUser,
 					location: loc,
 					photo: url,
-					date: datetime.getDate() + "/" + (datetime.getMonth()+1) + "/" + datetime.getFullYear(),
-					time: datetime.getHours() + ":" + ("00"+datetime.getMinutes()).slice(-2),
+					end_datetime: endtime,
+					datetime: firebase.database.ServerValue.TIMESTAMP,
 					remarks: remarks
 				})
 	        })
@@ -82,7 +89,21 @@ export default class Home extends React.Component {
 	        })
 	}
 
+	getRemainingTime (endMs) {
+		let diffMs = endMs - this.state.currServerTime;
+		console.log(this.state.currServerTime);
+		let diffHrs = Math.floor((diffMs % 86400000) / 3600000);
+		let diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
+		return diffHrs + " hrs " + diffMins + " mins";
+	}
+
 	makeRemoteRequest = () => {
+		firebase.database().ref("/.info/serverTimeOffset").on('value', (offset) => {
+			var offsetVal = offset.val() || 0;
+			var serverTime = Date.now() + offsetVal;
+			this.setState({currServerTime: serverTime});
+		});
+
 	    firebase.database().ref('posts').on('value',(snap) => {
 	        var items = [];
 	        this.getItems(snap, items);
@@ -90,22 +111,23 @@ export default class Home extends React.Component {
         	this.setState({
         		posts: items,
         		refreshing: false,
-	        }
-	        );
+	        });
 	    });
 	}
 
 	getItems = (snap, items) => {
         snap.forEach((child) => {
-            items.push({
-                key: child.key,
-                photo: child.val().photo,
-                name: child.val().name,
-                location: child.val().location,
-                time: child.val().time,
-                date: child.val().date,
-                remarks: child.val().remarks,
-            });
+            if (this.state.currServerTime < child.val().end_datetime) {
+	            items.push({
+	                key: child.key,
+	                photo: child.val().photo,
+	                name: child.val().name,
+	                location: child.val().location,
+	                end_datetime: new Date(child.val().end_datetime),
+	                datetime: new Date(child.val().datetime),
+	                remarks: child.val().remarks
+            	});
+        	}
         });
     }
 
@@ -115,19 +137,33 @@ export default class Home extends React.Component {
 
 	componentDidMount() {
 		const user = firebase.auth().currentUser;
-		this.setState({currUser:user.email});
+		this.setState({
+			currUser:user.email,
+		});
 		this.makeRemoteRequest();
 	}
 
 	render() {
 		return (
 			<Container>
+				<DateTimePicker
+        			isVisible={this.state.DateTimePickerModal}
+        			mode='time'
+        			is24Hour={false}
+        			onConfirm= {(time) => {
+        				this.setState({addEndTime:time.valueOf()});
+        				this.setState({DateTimePickerModal:false});
+        			}}
+        			onCancel={() => this.setState({DateTimePickerModal:false})}
+			    />
+			    
 				<Modal
 				animationType='slide'
 				transparent={false}
 				visible={this.state.addModal}
 				onRequestClose={()=>this.setState({
 					addLocation:null,
+					addEndTime: '',
 					addPhotoPath: '',
 			    	addPhotoURL: '',
 			    	addPhotoMime:'',
@@ -149,6 +185,7 @@ export default class Home extends React.Component {
 					<Content>
 						<Form>
 			            	<Label>Location</Label>
+			            	<Text></Text>
 			            	{this.state.addLocation &&
 			            		<Text>{this.state.addLocation.name}</Text>
 			            	}
@@ -167,11 +204,10 @@ export default class Home extends React.Component {
 			            	}}>
 			            		<Text>Select Location</Text>
 			            	</Button>
+			            	<Text></Text>
 
 			            	<Label>Photo</Label>
-			            	{this.state.addPhotoPath !== '' &&
-			            		<Text>Image selected</Text>
-			            	}
+			            	<Text></Text>
 			            	<Button onPress={() => {
 			            		ImagePicker.openPicker({
 									compressImageQuality: 0.8,
@@ -187,6 +223,20 @@ export default class Home extends React.Component {
 							}}>
 			            		<Text>Select Photo</Text>
 			            	</Button>
+			            	{this.state.addPhotoPath !== '' &&
+			            		<Text>Image selected</Text>
+			            	}
+			            	<Text></Text>
+
+			            	<Label>End-Time</Label>
+			            	<Text></Text>
+			            	<Button onPress={() => {
+			            		this.setState({DateTimePickerModal:true})
+			            	}}>
+			            		<Text>Select end-time</Text>
+			            	</Button>
+			            	
+			            	<Text></Text>
 
 			            	<Label>Remarks</Label>
 			            	<Textarea
@@ -202,6 +252,7 @@ export default class Home extends React.Component {
 
 							this.setState({
 								addLocation: null,
+								addEndTime: '',
 								addPhotoPath: '',
 						    	addPhotoURL: '',
 						    	addPhotoMime:'',
@@ -258,10 +309,31 @@ export default class Home extends React.Component {
 							}}>
 								Address: {this.state.currLocation.address}
 							</Text>
+							<Text></Text>
+
+							<Text>End DateTime: {this.state.currEndTime.toLocaleString()}</Text>
+							<Text></Text>
+
+							<Text>Remarks:</Text>
+							<Text>{this.state.currRemarks}</Text>
+							<Text></Text>
+
 							<Text>Posted by: {this.state.currName}</Text>
-							<Text>Time: {this.state.currTime}</Text>
-							<Text>Date: {this.state.currDate}</Text>
-							<Text>Remarks: {this.state.currRemarks}</Text>
+							<Text>Post DateTime: {this.state.currDateTime.toLocaleString()}</Text>
+							<Text></Text>
+
+							<Text>Comments:</Text>
+							<Text></Text>
+
+							<Textarea
+			            		rowSpan={2}
+			            		bordered placeholder="Leave a comment here!"
+			            		value={this.state.currNewComment}
+			            		onChangeText={(text) => this.setState({currNewComment:text})}
+			            	/>
+							<Button>
+								<Text>Add comment</Text>
+							</Button>
 						</View>
 					</Content>
 				</Modal>
@@ -278,6 +350,7 @@ export default class Home extends React.Component {
 					<Right>
 						<Button transparent onPress={()=>this.setState({
 								addLocation:null,
+								addEndTime: '',
 								addPhotoPath: '',
 						    	addPhotoURL: '',
 						    	addPhotoMime:'',
@@ -297,16 +370,18 @@ export default class Home extends React.Component {
 						onRefresh={this.handleRefresh}
 
 						renderItem={({item}) =>
-							<TouchableOpacity onPress={()=> this.setState({
-								postModal:true,
-								currKey: item.key,
-								currPhoto: item.photo,
-								currName: item.name,
-								currLocation: item.location,
-								currTime: item.time,
-								currDate: item.date,
-								currRemarks: item.remarks
-							})}>
+							<TouchableOpacity
+								onPress={()=> this.setState({
+									postModal:true,
+									currKey: item.key,
+									currPhoto: item.photo,
+									currName: item.name,
+									currLocation: item.location,
+									currEndTime: item.end_datetime,
+									currDateTime: item.datetime,
+									currRemarks: item.remarks
+								})}
+							>
 							<Card>
 								<CardItem cardBody>
 									<Image
@@ -316,8 +391,8 @@ export default class Home extends React.Component {
 								</CardItem>
 								<CardItem>
 									<Body>
-										<Text>Loc: {item.location.name}</Text>
-										<Text>Time: {item.time}</Text>
+										<Text>{item.location.name}</Text>
+										<Text>Ending in {this.getRemainingTime(item.end_datetime.valueOf())}</Text>
 									</Body>
 								</CardItem>
 							</Card>
