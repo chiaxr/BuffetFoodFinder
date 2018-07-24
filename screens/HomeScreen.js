@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Container, Header, Content, Footer, Title,
 		Button, Text, Left, Right, Body, Icon, Card, CardItem,
-		Form, Item, Label, Input, Textarea } from 'native-base';
+		Form, Item, Label, Input, Textarea, Fab } from 'native-base';
 import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity,
 		Platform, Linking } from 'react-native';
 
@@ -23,6 +23,8 @@ export default class Home extends React.Component {
 
 	    	posts: [],
 	    	refreshing: false,
+
+	    	toggleSort: true,
 
 	    	currServerTime: null,
 	    	currUser: null,
@@ -107,7 +109,17 @@ export default class Home extends React.Component {
 	    firebase.database().ref('posts').on('value',(snap) => {
 	        var items = [];
 	        this.getItems(snap, items);
-	        items = items.reverse();
+
+	        if ( this.state.toggleSort ) { //sort by endtime
+	        	items.sort(function(a,b) {
+	        		return a.end_datetime - b.end_datetime;
+	        	});
+	        } else {
+	        	items.sort(function(a,b) { // sort by proximity
+
+	        	});
+	        }
+
         	this.setState({
         		posts: items,
         		refreshing: false,
@@ -348,20 +360,17 @@ export default class Home extends React.Component {
 						<Title>Home</Title>
 					</Body>
 					<Right>
-						<Button transparent onPress={()=>this.setState({
-								addLocation:null,
-								addEndTime: '',
-								addPhotoPath: '',
-						    	addPhotoURL: '',
-						    	addPhotoMime:'',
-						    	addRemarks: '',
-								addModal:true
-						})}>
-							<Icon type='Entypo' name='plus' />
+						<Button transparent onPress={()=> this.setState({toggleSort: !this.state.toggleSort})}>
+							{this.state.toggleSort ? (
+								<Icon type='Entypo' name='time-slot' />
+							) : (
+								<Icon type='Entypo' name='location' />								)
+							}
 						</Button>
 					</Right>
 				</Header>
-				
+
+				<Container>
 				<Content>
 					<FlatList
 						data = {this.state.posts}
@@ -400,6 +409,24 @@ export default class Home extends React.Component {
 						}
 					/>
 				</Content>
+				<Fab
+					active={true}
+					direction="up"
+					containerStyle={{}}
+					position='bottomRight'
+					onPress={() => this.setState({
+						addLocation: null,
+						addEndTime: '',
+						addPhotoPath: '',
+						addPhotoURL: '',
+						addPhotoMime:'',
+						addRemarks: '',
+						addModal:true
+					})}
+				>
+					<Icon type='Entypo' name='plus' />
+				</Fab>
+				</Container>
 			</Container>
 		);
 	}
