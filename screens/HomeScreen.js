@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Container, Header, Content, Footer, Title,
 		Button, Text, Left, Right, Body, Icon, Card, CardItem,
-		Form, Item, Label, Input, Textarea, Fab } from 'native-base';
+		Form, Item, Label, Input, Textarea, Fab, Spinner } from 'native-base';
 import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity,
 		Platform, Linking } from 'react-native';
 
@@ -22,9 +22,11 @@ export default class Home extends React.Component {
 	    	DateTimePickerModal: false,
 
 	    	posts: [],
-	    	refreshing: false,
+	    	refreshing: true,
 
 	    	toggleSort: true,
+	    	latitude: 200,	//out of bounds of valid latitude
+	    	longitude: 200,	//out of bounds of valid longitude
 
 	    	currServerTime: null,
 	    	currUser: null,
@@ -93,36 +95,40 @@ export default class Home extends React.Component {
 
 	getRemainingTime (endMs) {
 		let diffMs = endMs - this.state.currServerTime;
-		console.log(this.state.currServerTime);
 		let diffHrs = Math.floor((diffMs % 86400000) / 3600000);
 		let diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
 		return diffHrs + " hrs " + diffMins + " mins";
 	}
 
-	makeRemoteRequest = () => {
-		firebase.database().ref("/.info/serverTimeOffset").on('value', (offset) => {
-			var offsetVal = offset.val() || 0;
-			var serverTime = Date.now() + offsetVal;
-			this.setState({currServerTime: serverTime});
-		});
+	getHaversineDist (aLat, aLon, bLat, bLon) {
+		const PI_360 = Math.PI / 360;
+		const cLat = Math.cos((aLat + bLat) * PI_360);
+		const dLat = (bLat - aLat) * PI_360;
+		const dLon = (bLon - aLon) * PI_360;
 
-	    firebase.database().ref('posts').on('value',(snap) => {
+		const f = dLat * dLat + cLat * cLat * dLon * dLon;
+		const c = 2 * Math.atan2(Math.sqrt(f), Math.sqrt(1 - f));
+
+		return 6378.137 * c; // dist in km
+	}
+
+	makeRemoteRequest = () => {
+      	firebase.database().ref('posts').once('value').then((snap) => {
 	        var items = [];
 	        this.getItems(snap, items);
 
-	        if ( this.state.toggleSort ) { //sort by endtime
+	        if ( this.state.toggleSort === true ) { //sort by endtime
 	        	items.sort(function(a,b) {
 	        		return a.end_datetime - b.end_datetime;
 	        	});
 	        } else {
 	        	items.sort(function(a,b) { // sort by proximity
-
+					return a.distance - b.distance;
 	        	});
 	        }
 
         	this.setState({
-        		posts: items,
-        		refreshing: false,
+        		posts: items
 	        });
 	    });
 	}
@@ -130,6 +136,8 @@ export default class Home extends React.Component {
 	getItems = (snap, items) => {
         snap.forEach((child) => {
             if (this.state.currServerTime < child.val().end_datetime) {
+            	let h_dist = this.getHaversineDist(this.state.latitude, this.state.longitude,
+            								  child.val().location.latitude, child.val().location.longitude);
 	            items.push({
 	                key: child.key,
 	                photo: child.val().photo,
@@ -137,7 +145,8 @@ export default class Home extends React.Component {
 	                location: child.val().location,
 	                end_datetime: new Date(child.val().end_datetime),
 	                datetime: new Date(child.val().datetime),
-	                remarks: child.val().remarks
+	                remarks: child.val().remarks,
+	                distance: h_dist
             	});
         	}
         });
@@ -145,14 +154,38 @@ export default class Home extends React.Component {
 
     handleRefresh = () => {
     	this.setState({refreshing:true});
-    }
-
-	componentDidMount() {
+    	
+    	// Get current user
 		const user = firebase.auth().currentUser;
 		this.setState({
 			currUser:user.email,
 		});
-		this.makeRemoteRequest();
+
+		// Get server time
+		firebase.database().ref("/.info/serverTimeOffset").on('value', (offset) => {
+			var offsetVal = offset.val() || 0;
+			var serverTime = Date.now() + offsetVal;
+			this.setState({currServerTime: serverTime});
+		});
+
+		// Get user location
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				this.setState({
+					latitude: position.coords.latitude,
+					longitude: position.coords.longitude,
+				});
+	    	},
+			(error) => console.log(error),
+			{ enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+		).then( () => {
+			this.makeRemoteRequest();
+			this.setState({refreshing: false});
+		});
+    }
+
+	componentDidMount() {
+		this.handleRefresh();
 	}
 
 	render() {
@@ -360,23 +393,35 @@ export default class Home extends React.Component {
 						<Title>Home</Title>
 					</Body>
 					<Right>
-						<Button transparent onPress={()=> this.setState({toggleSort: !this.state.toggleSort})}>
+						<Button transparent onPress={()=> {
+							this.handleRefresh();
+						}}>
+							<Icon type='Entypo' name='cw' />
+						</Button>
+
+						<Button transparent onPress={()=> {
+							this.setState({toggleSort: !this.state.toggleSort});
+							this.makeRemoteRequest();
+						}}>
 							{this.state.toggleSort ? (
 								<Icon type='Entypo' name='time-slot' />
 							) : (
-								<Icon type='Entypo' name='location' />								)
-							}
+								<Icon type='Entypo' name='location' />								
+							)}
 						</Button>
 					</Right>
 				</Header>
 
 				<Container>
-				<Content>
+				<Content contentContainerStyle={{ justifyContent: 'center', flex: 1 }}>
+				{ this.state.refreshing ? (
+					<Spinner color='blue' />
+				) : (
 					<FlatList
 						data = {this.state.posts}
 
 						refreshing = {this.state.refreshing}
-						onRefresh={this.handleRefresh}
+						onRefresh={() => this.handleRefresh()}
 
 						renderItem={({item}) =>
 							<TouchableOpacity
@@ -402,12 +447,15 @@ export default class Home extends React.Component {
 									<Body>
 										<Text>{item.location.name}</Text>
 										<Text>Ending in {this.getRemainingTime(item.end_datetime.valueOf())}</Text>
+										<Text>{item.distance.toFixed(2)} km away</Text>
 									</Body>
 								</CardItem>
 							</Card>
 							</TouchableOpacity>
 						}
 					/>
+				)
+				}
 				</Content>
 				<Fab
 					active={true}
