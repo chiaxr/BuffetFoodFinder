@@ -37,7 +37,7 @@ export default class Home extends React.Component {
 	    	currDateTime: new Date(),
 	    	currEndTime: new Date(),
 	    	currRemarks: '',
-	    	currComments: null,
+	    	currComments: [],
 	    	currNewComment: '',
 
 	    	addLocation: null,
@@ -112,20 +112,24 @@ export default class Home extends React.Component {
 		return 6378.137 * c; // dist in km
 	}
 
+	sortItems = (items, sortType) => {
+    	if ( sortType === true ) { //sort by endtime
+	    	items.sort(function(a,b) {
+	    		return a.end_datetime - b.end_datetime;
+	    	});
+	    } else {
+        	items.sort(function(a,b) { // sort by proximity
+				return a.distance - b.distance;
+        	});
+        }
+	}
+
 	makeRemoteRequest = () => {
       	firebase.database().ref('posts').once('value').then((snap) => {
 	        var items = [];
 	        this.getItems(snap, items);
 
-	        if ( this.state.toggleSort === true ) { //sort by endtime
-	        	items.sort(function(a,b) {
-	        		return a.end_datetime - b.end_datetime;
-	        	});
-	        } else {
-	        	items.sort(function(a,b) { // sort by proximity
-					return a.distance - b.distance;
-	        	});
-	        }
+	        this.sortItems(items, this.state.toggleSort);
 
         	this.setState({
         		posts: items
@@ -150,6 +154,33 @@ export default class Home extends React.Component {
             	});
         	}
         });
+    }
+
+    getComments = (key) => {
+    	firebase.database().ref('comments/' + key).on('value', (snap) => {
+	        var items = [];
+	        
+	        snap.forEach((child) => {
+	        	items.push({
+	        		key:child.key,
+	        		user: child.val().user,
+	        		message: child.val().message,
+	        		datetime: new Date(child.val().datetime)
+	        	})
+	        });
+
+        	this.setState({
+        		currComments: items
+	        });
+	    });
+    }
+
+    submitComment = () => {
+    	firebase.database().ref('comments/' + this.state.currKey).push({
+    		user: this.state.currUser,
+    		message: this.state.currNewComment,
+    		datetime: firebase.database.ServerValue.TIMESTAMP
+    	});
     }
 
     handleRefresh = () => {
@@ -336,8 +367,16 @@ export default class Home extends React.Component {
 				animationType='fade'
 				transparent={false}
 				visible={this.state.postModal}
-				onRequestClose={()=>this.setState({postModal:false})}
-				>
+				onRequestClose={()=>this.setState({
+					currKey: 0,
+			    	currPhoto: '',
+			    	currName: '',
+			    	currLocation: '',
+			    	currRemarks: '',
+			    	currComments: [],
+			    	currNewComment: '',
+					postModal:false
+				})}>
 					<Header>
 						<Left>
 							<Button transparent onPress={()=>this.setState({postModal:false})}>
@@ -358,6 +397,7 @@ export default class Home extends React.Component {
 				        	flexDirection: 'column',
 				        	padding: 20,
 				        }}>
+				        	<Text style={{fontWeight: 'bold'}}>Location:</Text>
 							<Text onPress={() => {
 								let maps_url = 'https://www.google.com/maps/search/?api=1&query=' +
 												this.state.currLocation.latitude + ',' +
@@ -365,8 +405,11 @@ export default class Home extends React.Component {
 												this.state.currLocation.google_id;		
 								Linking.openURL(maps_url);
 							}}>
-								Location: {this.state.currLocation.name}
+								{this.state.currLocation.name}
 							</Text>
+							<Text></Text>
+
+							<Text style={{fontWeight: 'bold'}}>Address:</Text>
 							<Text onPress={() => {
 								let maps_url = 'https://www.google.com/maps/search/?api=1&query=' +
 												this.state.currLocation.latitude + ',' +
@@ -374,14 +417,15 @@ export default class Home extends React.Component {
 												this.state.currLocation.google_id;		
 								Linking.openURL(maps_url);
 							}}>
-								Address: {this.state.currLocation.address}
+								{this.state.currLocation.address}
 							</Text>
 							<Text></Text>
 
-							<Text>End DateTime: {this.state.currEndTime.toLocaleString()}</Text>
+							<Text style={{fontWeight: 'bold'}}>End DateTime:</Text>
+							<Text>{this.state.currEndTime.toLocaleString()}</Text>
 							<Text></Text>
 
-							<Text>Remarks:</Text>
+							<Text style={{fontWeight: 'bold'}}>Remarks:</Text>
 							<Text>{this.state.currRemarks}</Text>
 							<Text></Text>
 
@@ -389,16 +433,45 @@ export default class Home extends React.Component {
 							<Text>Post DateTime: {this.state.currDateTime.toLocaleString()}</Text>
 							<Text></Text>
 
-							<Text>Comments:</Text>
+							<Text style={{fontWeight: 'bold'}}>Comments:</Text>
 							<Text></Text>
+							<FlatList
+								data = {this.state.currComments}
 
+								renderItem={({item}) =>
+									<Card transparent>
+										<CardItem cardBody>
+											<Text style={{ fontWeight: '500' }}>   {item.user}:</Text>
+										</CardItem>
+										<CardItem>
+											<Text>{item.message}</Text>
+										</CardItem>
+										<CardItem cardBody>
+											<Text style={{ fontSize: 14 }}>   {item.datetime.toLocaleString()}</Text>
+										</CardItem>
+									</Card>
+								}
+							/>
+
+							<Text></Text>
 							<Textarea
-			            		rowSpan={2}
+			            		rowSpan={4}
 			            		bordered placeholder="Leave a comment here!"
 			            		value={this.state.currNewComment}
 			            		onChangeText={(text) => this.setState({currNewComment:text})}
 			            	/>
-							<Button>
+							<Button onPress={() => {
+								if (this.state.currNewComment !== '') {
+									this.submitComment();
+									this.setState({currNewComment:''});
+									Toast.show({
+										type: 'success',
+										text: 'Comment submitted',
+										duration: 2500,
+										buttonText: 'OK'
+									});
+								}
+							}}>
 								<Text>Add comment</Text>
 							</Button>
 						</View>
@@ -447,16 +520,20 @@ export default class Home extends React.Component {
 
 						renderItem={({item}) =>
 							<TouchableOpacity
-								onPress={()=> this.setState({
-									postModal:true,
-									currKey: item.key,
-									currPhoto: item.photo,
-									currName: item.name,
-									currLocation: item.location,
-									currEndTime: item.end_datetime,
-									currDateTime: item.datetime,
-									currRemarks: item.remarks
-								})}
+								onPress={()=> {
+									this.setState({
+										postModal:true,
+										currKey: item.key,
+										currPhoto: item.photo,
+										currName: item.name,
+										currLocation: item.location,
+										currEndTime: item.end_datetime,
+										currDateTime: item.datetime,
+										currRemarks: item.remarks
+									});
+
+									this.getComments(item.key);
+								}}
 							>
 							<Card>
 								<CardItem cardBody>
