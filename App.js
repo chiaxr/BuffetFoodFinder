@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Container, Header, Title, Button, Left, Right, Body, Icon } from 'native-base';
+import { Container, Header, Title, Button, Left, Right, Body, Icon, Root } from 'native-base';
 import { createStackNavigator, createDrawerNavigator } from 'react-navigation'
 import HomeScreen from './screens/HomeScreen'
 import MyPostsScreen from './screens/MyPostsScreen'
@@ -29,8 +29,9 @@ firebase.initializeApp(firebaseConfig);
 export default class App extends Component {
 	render() {
 		return (
-			// <AppDrawerNavigator />
-			<AppSwitchNavigator />
+			<Root>
+				<AppSwitchNavigator />
+			</Root>
 		);
 	}
 }

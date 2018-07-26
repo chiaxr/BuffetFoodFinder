@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Container, Header, Content, Footer, Title,
 		Button, Text, Left, Right, Body, Icon, Card, CardItem,
-		Form, Item, Label, Input, Textarea, Fab, Spinner } from 'native-base';
+		Form, Item, Label, Input, Textarea, Fab, Spinner, Toast } from 'native-base';
 import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity,
 		Platform, Linking } from 'react-native';
 
@@ -41,7 +41,7 @@ export default class Home extends React.Component {
 	    	currNewComment: '',
 
 	    	addLocation: null,
-	    	addEndTime: 0,
+	    	addEndTime: null,
 	    	addPhotoPath: '',
 	    	addPhotoURL: '',
 	    	addPhotoMime:'',
@@ -65,7 +65,7 @@ export default class Home extends React.Component {
 	    let mime = this.state.addPhotoMime
 	    let loc = this.state.addLocation
 	    let remarks = this.state.addRemarks
-	    let endtime = this.state.addEndTime
+	    let endtime = this.state.addEndTime.valueOf()
 	    fs.readFile(imagePath, 'base64')
 	        .then((data) => {
 	          	return Blob.build(data, { type: `${mime};BASE64` })
@@ -196,7 +196,10 @@ export default class Home extends React.Component {
         			mode='time'
         			is24Hour={false}
         			onConfirm= {(time) => {
-        				this.setState({addEndTime:time.valueOf()});
+        				if (time.valueOf() < this.state.currServerTime) {
+	        				time.setDate(time.getDate() + 1); // increment day by 1 if time selected is before current time
+	        			}
+        				this.setState({addEndTime:time});
         				this.setState({DateTimePickerModal:false});
         			}}
         			onCancel={() => this.setState({DateTimePickerModal:false})}
@@ -208,7 +211,7 @@ export default class Home extends React.Component {
 				visible={this.state.addModal}
 				onRequestClose={()=>this.setState({
 					addLocation:null,
-					addEndTime: '',
+					addEndTime: null,
 					addPhotoPath: '',
 			    	addPhotoURL: '',
 			    	addPhotoMime:'',
@@ -230,10 +233,10 @@ export default class Home extends React.Component {
 					<Content>
 						<Form>
 			            	<Label>Location</Label>
-			            	<Text></Text>
 			            	{this.state.addLocation &&
 			            		<Text>{this.state.addLocation.name}</Text>
 			            	}
+			            	<Text></Text>
 			            	<Button onPress={() => {
 			            		RNGooglePlacePicker.show((response) => {
 									if (response.didCancel) {
@@ -252,6 +255,9 @@ export default class Home extends React.Component {
 			            	<Text></Text>
 
 			            	<Label>Photo</Label>
+			            	{this.state.addPhotoPath !== '' &&
+			            		<Text>Image selected</Text>
+			            	}
 			            	<Text></Text>
 			            	<Button onPress={() => {
 			            		ImagePicker.openPicker({
@@ -268,12 +274,13 @@ export default class Home extends React.Component {
 							}}>
 			            		<Text>Select Photo</Text>
 			            	</Button>
-			            	{this.state.addPhotoPath !== '' &&
-			            		<Text>Image selected</Text>
-			            	}
+			            	
 			            	<Text></Text>
 
 			            	<Label>End-Time</Label>
+			            	{this.state.addEndTime &&
+			            		<Text>{this.state.addEndTime.toLocaleString()}</Text>
+			            	}
 			            	<Text></Text>
 			            	<Button onPress={() => {
 			            		this.setState({DateTimePickerModal:true})
@@ -292,21 +299,36 @@ export default class Home extends React.Component {
 			            	/>
 						</Form>
 
+						{ (this.state.addLocation === null || this.state.addEndTime === null || this.state.addPhotoPath === '') ? (
+						<Button full disabled>
+							<Text>Submit</Text>
+						</Button>
+						) : (
 						<Button full onPress={()=> {
 							this.submitPost();
 
 							this.setState({
 								addLocation: null,
-								addEndTime: '',
+								addEndTime: null,
 								addPhotoPath: '',
 						    	addPhotoURL: '',
 						    	addPhotoMime:'',
 						    	addRemarks: '',
 								addModal:false
 							});
+
+							this.handleRefresh();
+
+							Toast.show({
+								type: 'success',
+								text: 'Post submitted',
+								duration: 2500,
+								buttonText: 'OK'
+							});
 						}}>
 							<Text>Submit</Text>
 						</Button>
+						)}
 					</Content>
 				</Modal>
 
@@ -464,7 +486,7 @@ export default class Home extends React.Component {
 					position='bottomRight'
 					onPress={() => this.setState({
 						addLocation: null,
-						addEndTime: '',
+						addEndTime: null,
 						addPhotoPath: '',
 						addPhotoURL: '',
 						addPhotoMime:'',
