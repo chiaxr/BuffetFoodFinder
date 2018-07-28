@@ -4,6 +4,8 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
+#import <GoogleMaps/GoogleMaps.h>
+#import <GooglePlaces/GooglePlaces.h>
 
 #import "AppDelegate.h"
 
@@ -15,6 +17,10 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
   NSURL *jsCodeLocation;
+
+  NSString *kAPIKey = @"AIzaSyBL1owivS4LxOclTXdZflrsLYu5DY2iX28";
+  [GMSPlacesClient provideAPIKey:kAPIKey];
+  [GMSServices provideAPIKey:kAPIKey];
 
   jsCodeLocation = [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index" fallbackResource:nil];
 

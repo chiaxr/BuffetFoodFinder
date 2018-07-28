@@ -1,0 +1,125 @@
+PODS:
+  - Firebase/Auth (5.4.1):
+    - Firebase/CoreOnly
+    - FirebaseAuth (= 5.0.2)
+  - Firebase/CoreOnly (5.4.1):
+    - FirebaseCore (= 5.0.6)
+  - FirebaseAuth (5.0.2):
+    - FirebaseCore (~> 5.0)
+    - GTMSessionFetcher/Core (~> 1.1)
+  - FirebaseCore (5.0.6):
+    - "GoogleToolboxForMac/NSData+zlib (~> 2.1)"
+  - GoogleMaps (2.0.1):
+    - GoogleMaps/Maps (= 2.0.1)
+  - GoogleMaps/Base (2.0.1)
+  - GoogleMaps/Maps (2.0.1):
+    - GoogleMaps/Base (= 2.0.1)
+  - GooglePlacePicker (2.0.1):
+    - GoogleMaps (= 2.0.1)
+    - GooglePlaces (= 2.0.1)
+  - GooglePlaces (2.0.1):
+    - GoogleMaps/Base (= 2.0.1)
+  - GoogleToolboxForMac/Defines (2.1.4)
+  - "GoogleToolboxForMac/NSData+zlib (2.1.4)":
+    - GoogleToolboxForMac/Defines (= 2.1.4)
+  - GTMSessionFetcher/Core (1.1.15)
+  - QBImagePickerController (3.4.0)
+  - React/Core (0.55.4):
+    - yoga (= 0.55.4.React)
+  - React/fishhook (0.55.4)
+  - React/RCTActionSheet (0.55.4):
+    - React/Core
+  - React/RCTAnimation (0.55.4):
+    - React/Core
+  - React/RCTBlob (0.55.4):
+    - React/Core
+  - React/RCTGeolocation (0.55.4):
+    - React/Core
+  - React/RCTImage (0.55.4):
+    - React/Core
+    - React/RCTNetwork
+  - React/RCTLinkingIOS (0.55.4):
+    - React/Core
+  - React/RCTNetwork (0.55.4):
+    - React/Core
+  - React/RCTSettings (0.55.4):
+    - React/Core
+  - React/RCTText (0.55.4):
+    - React/Core
+  - React/RCTVibration (0.55.4):
+    - React/Core
+  - React/RCTWebSocket (0.55.4):
+    - React/Core
+    - React/fishhook
+    - React/RCTBlob
+  - rn-fetch-blob (0.10.6):
+    - React/Core
+  - RNImageCropPicker (0.20.3):
+    - QBImagePickerController
+    - React/Core
+    - RSKImageCropper
+  - RSKImageCropper (2.1.0)
+  - yoga (0.55.4.React)
+
+DEPENDENCIES:
+  - Firebase/Auth
+  - GoogleMaps (= 2.0.1)
+  - GooglePlacePicker (= 2.0.1)
+  - GooglePlaces (= 2.0.1)
+  - React/Core (from `../node_modules/react-native`)
+  - React/RCTActionSheet (from `../node_modules/react-native`)
+  - React/RCTAnimation (from `../node_modules/react-native`)
+  - React/RCTGeolocation (from `../node_modules/react-native`)
+  - React/RCTImage (from `../node_modules/react-native`)
+  - React/RCTLinkingIOS (from `../node_modules/react-native`)
+  - React/RCTNetwork (from `../node_modules/react-native`)
+  - React/RCTSettings (from `../node_modules/react-native`)
+  - React/RCTText (from `../node_modules/react-native`)
+  - React/RCTVibration (from `../node_modules/react-native`)
+  - React/RCTWebSocket (from `../node_modules/react-native`)
+  - rn-fetch-blob (from `../node_modules/rn-fetch-blob`)
+  - RNImageCropPicker (from `../node_modules/react-native-image-crop-picker`)
+  - yoga (from `../node_modules/react-native/ReactCommon/yoga/yoga.podspec`)
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - Firebase
+    - FirebaseAuth
+    - FirebaseCore
+    - GoogleMaps
+    - GooglePlacePicker
+    - GooglePlaces
+    - GoogleToolboxForMac
+    - GTMSessionFetcher
+    - QBImagePickerController
+    - RSKImageCropper
+
+EXTERNAL SOURCES:
+  React:
+    :path: "../node_modules/react-native"
+  rn-fetch-blob:
+    :path: "../node_modules/rn-fetch-blob"
+  RNImageCropPicker:
+    :path: "../node_modules/react-native-image-crop-picker"
+  yoga:
+    :path: "../node_modules/react-native/ReactCommon/yoga/yoga.podspec"
+
+SPEC CHECKSUMS:
+  Firebase: 355bd535bfdacaa82a7fe8d9784115edefd6fc03
+  FirebaseAuth: 096e457cdd4274412a66c4a35874787e411f5a03
+  FirebaseCore: 4c28e3b9708ba48a765e76515f913a71596eb5dd
+  GoogleMaps: f09da64fc987c1aa29394567c3cab5a3df83c402
+  GooglePlacePicker: e7b11b732e40dbe76e8ab4c5fc2f4a7c32b96578
+  GooglePlaces: 72fab1d1651c6df0322f2aad245ffb15b80d3c56
+  GoogleToolboxForMac: 91c824d21e85b31c2aae9bb011c5027c9b4e738f
+  GTMSessionFetcher: 5fa5b80fd20e439ef5f545fb2cb3ca6c6714caa2
+  QBImagePickerController: d54cf93db6decf26baf6ed3472f336ef35cae022
+  React: aa2040dbb6f317b95314968021bd2888816e03d5
+  rn-fetch-blob: 76a8f798dae965bbcd146a2438f2e1d381c91ae3
+  RNImageCropPicker: 32ca4b9fef4e1b7b85ba69494242122948117e06
+  RSKImageCropper: 0d0c6d8525a2381f03fde32a47c6703817a2feed
+  yoga: a23273df0088bf7f2bb7e5d7b00044ea57a2a54a
+
+PODFILE CHECKSUM: 3fe057afca87b316f460ac8c022038fefb0dca5c
+
+COCOAPODS: 1.5.3

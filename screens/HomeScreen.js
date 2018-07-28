@@ -13,6 +13,7 @@ import DateTimePicker from 'react-native-modal-datetime-picker'
 import * as firebase from 'firebase'
 
 export default class Home extends React.Component {
+
 	constructor(props) {
 	    super(props);
 
@@ -159,7 +160,7 @@ export default class Home extends React.Component {
     getComments = (key) => {
     	firebase.database().ref('comments/' + key).on('value', (snap) => {
 	        var items = [];
-	        
+
 	        snap.forEach((child) => {
 	        	items.push({
 	        		key:child.key,
@@ -185,7 +186,7 @@ export default class Home extends React.Component {
 
     handleRefresh = () => {
     	this.setState({refreshing:true});
-    	
+
     	// Get current user
 		const user = firebase.auth().currentUser;
 		this.setState({
@@ -235,7 +236,7 @@ export default class Home extends React.Component {
         			}}
         			onCancel={() => this.setState({DateTimePickerModal:false})}
 			    />
-			    
+
 				<Modal
 				animationType='slide'
 				transparent={false}
@@ -305,7 +306,7 @@ export default class Home extends React.Component {
 							}}>
 			            		<Text>Select Photo</Text>
 			            	</Button>
-			            	
+
 			            	<Text></Text>
 
 			            	<Label>End-Time</Label>
@@ -318,7 +319,7 @@ export default class Home extends React.Component {
 			            	}}>
 			            		<Text>Select end-time</Text>
 			            	</Button>
-			            	
+
 			            	<Text></Text>
 
 			            	<Label>Remarks</Label>
@@ -402,7 +403,7 @@ export default class Home extends React.Component {
 								let maps_url = 'https://www.google.com/maps/search/?api=1&query=' +
 												this.state.currLocation.latitude + ',' +
 												this.state.currLocation.longitude + '&query_place_id=' +
-												this.state.currLocation.google_id;		
+												this.state.currLocation.google_id;
 								Linking.openURL(maps_url);
 							}}>
 								{this.state.currLocation.name}
@@ -414,7 +415,7 @@ export default class Home extends React.Component {
 								let maps_url = 'https://www.google.com/maps/search/?api=1&query=' +
 												this.state.currLocation.latitude + ',' +
 												this.state.currLocation.longitude + '&query_place_id=' +
-												this.state.currLocation.google_id;		
+												this.state.currLocation.google_id;
 								Linking.openURL(maps_url);
 							}}>
 								{this.state.currLocation.address}
@@ -501,7 +502,7 @@ export default class Home extends React.Component {
 							{this.state.toggleSort ? (
 								<Icon type='Entypo' name='time-slot' />
 							) : (
-								<Icon type='Entypo' name='location' />								
+								<Icon type='Entypo' name='location' />
 							)}
 						</Button>
 					</Right>

@@ -1,4 +1,5 @@
 import { AppRegistry } from 'react-native';
-import App from './App';
+import { Drawer } from './App'
+import React, { Component } from 'react';
 
-AppRegistry.registerComponent('BuffetFoodFinder', () => App);
+AppRegistry.registerComponent('BuffetFoodFinder', () => Drawer);
