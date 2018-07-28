@@ -59,7 +59,7 @@ export default class Home extends React.Component {
 	    let datetime = new Date()
 	    const imagePath = this.state.addPhotoPath
 	    const sessionID = datetime.getTime();
-		let imageName = this.state.currUser + '_' + sessionID
+		let imageName = this.state.currUser.email + '_' + sessionID
 	    let uploadBlob = null
 
 		const imageRef = firebase.storage().ref('cardImages').child(`${imageName}`)
@@ -80,14 +80,20 @@ export default class Home extends React.Component {
 		        return imageRef.getDownloadURL()
 	        })
 			.then((url) => {
-				firebase.database().ref('posts').push({
-					name: this.state.currUser,
+				return firebase.database().ref('posts').push({
+					name: this.state.currUser.email,
 					location: loc,
 					photo: url,
 					end_datetime: endtime,
 					datetime: firebase.database.ServerValue.TIMESTAMP,
 					remarks: remarks
 				})
+	        })
+	        .then((snap) => {
+	        	const post_id = snap.key
+	        	firebase.database().ref('users/' + this.state.currUser.uid + '/posts').push({
+	        		post_id: post_id
+	        	})
 	        })
 	        .catch((error) => {
 	          	console.log(error)
@@ -178,7 +184,7 @@ export default class Home extends React.Component {
 
     submitComment = () => {
     	firebase.database().ref('comments/' + this.state.currKey).push({
-    		user: this.state.currUser,
+    		user: this.state.currUser.email,
     		message: this.state.currNewComment,
     		datetime: firebase.database.ServerValue.TIMESTAMP
     	});
@@ -190,7 +196,7 @@ export default class Home extends React.Component {
     	// Get current user
 		const user = firebase.auth().currentUser;
 		this.setState({
-			currUser:user.email,
+			currUser:user,
 		});
 
 		// Get server time
@@ -351,12 +357,12 @@ export default class Home extends React.Component {
 
 							this.handleRefresh();
 
-							Toast.show({
-								type: 'success',
-								text: 'Post submitted',
-								duration: 2500,
-								buttonText: 'OK'
-							});
+							// Toast.show({
+							// 	type: 'success',
+							// 	text: 'Post submitted',
+							// 	duration: 2500,
+							// 	buttonText: 'OK'
+							// });
 						}}>
 							<Text>Submit</Text>
 						</Button>
@@ -465,12 +471,12 @@ export default class Home extends React.Component {
 								if (this.state.currNewComment !== '') {
 									this.submitComment();
 									this.setState({currNewComment:''});
-									Toast.show({
-										type: 'success',
-										text: 'Comment submitted',
-										duration: 2500,
-										buttonText: 'OK'
-									});
+									// Toast.show({
+									// 	type: 'success',
+									// 	text: 'Comment submitted',
+									// 	duration: 2500,
+									// 	buttonText: 'OK'
+									// });
 								}
 							}}>
 								<Text>Add comment</Text>
