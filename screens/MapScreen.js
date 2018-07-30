@@ -1,17 +1,23 @@
 import React, { Component } from 'react';
+import { Container, Header, Content, Footer, Title,
+		Button, Text, Left, Right, Body, Icon, Card, CardItem,
+		Textarea, Fab, Spinner, Toast } from 'native-base';
 import { FlatList, Modal, Image, View, Dimensions, TouchableOpacity,
 		Platform, Linking } from 'react-native';
-import { Container, Header, Content, Footer, Title,
-		Button, Text, Left, Right, Body, Icon, Card, CardItem, Textarea, Spinner } from 'native-base';
+import { Marker, Callout } from 'react-native-maps';
 
 import * as firebase from 'firebase'
+import MapView from 'react-native-maps';
 
-export default class MyPosts extends Component {
+export default class Home extends React.Component {
+
 	constructor(props) {
 	    super(props);
 
 	    this.state = {
 	    	postModal: false,
+
+	    	region: null,
 
 	    	posts: [],
 	    	refreshing: true,
@@ -33,52 +39,31 @@ export default class MyPosts extends Component {
 	    };
 	}
 
-	getRemainingTime (endMs) {
-		let diffMs = endMs - this.state.currServerTime;
-		let diffHrs = Math.floor((diffMs % 86400000) / 3600000);
-		let diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
-		return diffHrs + " hrs " + diffMins + " mins";
-	}
-
-	getHaversineDist (aLat, aLon, bLat, bLon) {
-		const PI_360 = Math.PI / 360;
-		const cLat = Math.cos((aLat + bLat) * PI_360);
-		const dLat = (bLat - aLat) * PI_360;
-		const dLon = (bLon - aLon) * PI_360;
-
-		const f = dLat * dLat + cLat * cLat * dLon * dLon;
-		const c = 2 * Math.atan2(Math.sqrt(f), Math.sqrt(1 - f));
-
-		return 6378.137 * c; // dist in km
-	}
-
-	getItems = (snap, items) => {
-        snap.forEach((child) => {
-        	let h_dist = this.getHaversineDist(this.state.latitude, this.state.longitude,
-        								  child.val().location.latitude, child.val().location.longitude);
-            items.push({
-                key: child.key,
-                photo: child.val().photo,
-                name: child.val().name,
-                location: child.val().location,
-                end_datetime: new Date(child.val().end_datetime),
-                datetime: new Date(child.val().datetime),
-                remarks: child.val().remarks,
-                distance: h_dist
-        	});
-        });
-    }
-
 	makeRemoteRequest = () => {
-      	firebase.database().ref('posts').orderByChild('name').equalTo(this.state.currUser.email).once('value').then((snap) => {
+      	firebase.database().ref('posts').once('value').then((snap) => {
 	        var items = [];
 	        this.getItems(snap, items);
-	        items = items.reverse();
         	this.setState({
         		posts: items
 	        });
 	    });
 	}
+
+	getItems = (snap, items) => {
+        snap.forEach((child) => {
+        	if (this.state.currServerTime < child.val().end_datetime) {
+	            items.push({
+	                key: child.key,
+	                photo: child.val().photo,
+	                name: child.val().name,
+	                location: child.val().location,
+	                end_datetime: new Date(child.val().end_datetime),
+	                datetime: new Date(child.val().datetime),
+	                remarks: child.val().remarks
+            	});
+            }
+        });
+    }
 
     getComments = (key) => {
     	firebase.database().ref('comments/' + key).on('value', (snap) => {
@@ -129,13 +114,13 @@ export default class MyPosts extends Component {
 				this.setState({
 					latitude: position.coords.latitude,
 					longitude: position.coords.longitude,
+					refreshing: false
 				});
 	    	},
 			(error) => console.log(error),
 			{ enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
 		).then( () => {
 			this.makeRemoteRequest();
-			this.setState({refreshing: false});
 		});
     }
 
@@ -180,8 +165,9 @@ export default class MyPosts extends Component {
 				        	flexDirection: 'column',
 				        	padding: 20,
 				        }}>
-				        	<Text style={{fontWeight: 'bold'}}>Location:</Text>
-							<Text onPress={() => {
+							<Text
+								style={{fontSize: 20}}
+								onPress={() => {
 								let maps_url = 'https://www.google.com/maps/search/?api=1&query=' +
 												this.state.currLocation.latitude + ',' +
 												this.state.currLocation.longitude + '&query_place_id=' +
@@ -269,7 +255,7 @@ export default class MyPosts extends Component {
 						</Button>
 					</Left>
 					<Body>
-						<Title >My Posts</Title>
+						<Title>Nearby</Title>
 					</Body>
 					<Right>
 						<Button transparent onPress={()=> {
@@ -284,55 +270,55 @@ export default class MyPosts extends Component {
 				{ this.state.refreshing ? (
 					<Spinner color='blue' />
 				) : (
-					<FlatList
-						data = {this.state.posts}
+					<View style={{width : Dimensions.get('window').width, height : Dimensions.get('window').height, flex: 1}}>
+						<MapView
+						    initialRegion={{
+						      latitude: this.state.latitude,
+						      longitude: this.state.longitude,
+						      latitudeDelta: 0.009043,
+						      longitudeDelta: 0.002465,
+						    }}
 
-						refreshing = {this.state.refreshing}
-						onRefresh={() => this.handleRefresh()}
+						    showsUserLocation={true}
+						    onPress={() => console.log("click")}
 
-						renderItem={({item}) =>
-							<TouchableOpacity
-								onPress={()=> {
-									this.setState({
+						    style={{
+								left: 0,
+								right: 0,
+								top: 0,
+								bottom: 0,
+								position: 'absolute'
+							}}
+						>
+						{this.state.posts.map(marker => (
+						    <Marker
+						    	coordinate={{
+						    		latitude: marker.location.latitude,
+						    		longitude: marker.location.longitude
+						    	}}
+						    	onPress={()=> {
+						    		this.setState({
 										postModal:true,
-										currKey: item.key,
-										currPhoto: item.photo,
-										currName: item.name,
-										currLocation: item.location,
-										currEndTime: item.end_datetime,
-										currDateTime: item.datetime,
-										currRemarks: item.remarks
+										currKey: marker.key,
+										currPhoto: marker.photo,
+										currName: marker.name,
+										currLocation: marker.location,
+										currEndTime: marker.end_datetime,
+										currDateTime: marker.datetime,
+										currRemarks: marker.remarks
 									});
 
-									this.getComments(item.key);
-								}}
-							>
-							<Card>
-								<CardItem cardBody>
-									<Image
-										source={{uri: item.photo}}
-										style={{height: 200, width: Dimensions.get('window').width, flex:1}}
-									/>
-								</CardItem>
-								<CardItem>
-									<Body>
-										<Text>{item.location.name}</Text>
-										{ (item.end_datetime.valueOf() > this.state.currServerTime) ?
-											<Text>Ending in {this.getRemainingTime(item.end_datetime.valueOf())}</Text>
-										:
-											<Text>-ENDED-</Text>
-										}
-										<Text>{item.distance.toFixed(2)} km away</Text>
-									</Body>
-								</CardItem>
-							</Card>
-							</TouchableOpacity>
-						}
-					/>
+									this.getComments(marker.key);
+						    	}}
+						    />
+						 ))}
+						</MapView>
+					</View>
 				)
 				}
 				</Content>
 			</Container>
+			
 		);
 	}
 }

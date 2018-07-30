@@ -89,12 +89,12 @@ export default class Home extends React.Component {
 					remarks: remarks
 				})
 	        })
-	        .then((snap) => {
-	        	const post_id = snap.key
-	        	firebase.database().ref('users/' + this.state.currUser.uid + '/posts').push({
-	        		post_id: post_id
-	        	})
-	        })
+	        // .then((snap) => {
+	        // 	const post_id = snap.key
+	        // 	firebase.database().ref('users/' + this.state.currUser.uid + '/posts').push({
+	        // 		post_id: post_id
+	        // 	})
+	        // })
 	        .catch((error) => {
 	          	console.log(error)
 	        })
@@ -139,7 +139,8 @@ export default class Home extends React.Component {
 	        this.sortItems(items, this.state.toggleSort);
 
         	this.setState({
-        		posts: items
+        		posts: items,
+        		refreshing: false
 	        });
 	    });
 	}
@@ -218,7 +219,6 @@ export default class Home extends React.Component {
 			{ enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
 		).then( () => {
 			this.makeRemoteRequest();
-			this.setState({refreshing: false});
 		});
     }
 
@@ -404,7 +404,9 @@ export default class Home extends React.Component {
 				        	flexDirection: 'column',
 				        	padding: 20,
 				        }}>
-							<Text onPress={() => {
+							<Text
+								style={{fontSize: 20}}
+								onPress={() => {
 								let maps_url = 'https://www.google.com/maps/search/?api=1&query=' +
 												this.state.currLocation.latitude + ',' +
 												this.state.currLocation.longitude + '&query_place_id=' +
