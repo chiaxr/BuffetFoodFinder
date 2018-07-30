@@ -20,8 +20,7 @@ export default class Login extends React.Component {
     return (
       <View style={styles.container}>
         <Text style={styles.introText}> Welcome to BuffetFoodFinder </Text>
-        <Image style={styles.bffLogo} source={{uri: 'https://bootdey.com/img/Content/avatar/avatar6.png'}}/>
-
+        <Image style={styles.bffLogo} source={{uri: 'https://preview.ibb.co/mQHh18/bff_logo.png'}}/>
         {this.state.errorMessage &&
           <Text style={{ color: 'red' }}>
             {this.state.errorMessage}
@@ -42,10 +41,6 @@ export default class Login extends React.Component {
           onChangeText={password => this.setState({ password })}
           value={this.state.password}
         />
-        {this.state.errorMessage &&
-          <Text style={{ color: 'red' }}>
-            {this.state.errorMessage}
-          </Text>}
 
         <TouchableOpacity
         style={styles.loginButton}
@@ -67,16 +62,17 @@ export default class Login extends React.Component {
 }
 const styles = StyleSheet.create({
   bffLogo: {
-    width: 130,
-    height: 130,
-    borderRadius: 63,
+    width: 375,
+    height: 250,
+    borderRadius: 0,
     borderWidth: 0,
     marginBottom:10,
     alignSelf:'center',
-    marginTop: 25,
-    marginBottom: 70
+    marginTop: 20,
+    marginBottom: 20
   },
   container: {
+    backgroundColor: '#b0cad6',
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',

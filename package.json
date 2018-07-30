@@ -15,7 +15,7 @@
     "react-native-google-place-picker": "^1.2.1",
     "react-native-image-crop-picker": "^0.20.3",
     "react-native-modal-datetime-picker": "^6.0.0",
-    "react-navigation": "^2.9.2",
+    "react-navigation": "^2.9.3",
     "rn-fetch-blob": "^0.10.12"
   },
   "devDependencies": {

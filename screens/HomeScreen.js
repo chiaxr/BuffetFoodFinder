@@ -404,7 +404,6 @@ export default class Home extends React.Component {
 				        	flexDirection: 'column',
 				        	padding: 20,
 				        }}>
-				        	<Text style={{fontWeight: 'bold'}}>Location:</Text>
 							<Text onPress={() => {
 								let maps_url = 'https://www.google.com/maps/search/?api=1&query=' +
 												this.state.currLocation.latitude + ',' +
@@ -485,10 +484,11 @@ export default class Home extends React.Component {
 					</Content>
 				</Modal>
 
-				<Header>
+				<Header
+					style={{backgroundColor: "#567a8d"}}>
 					<Left>
 						<Button transparent onPress={()=>this.props.navigation.openDrawer()}>
-							<Icon type='Entypo' name='menu' />
+							<Icon type='Entypo' name='menu' style={{ color: 'white'}}/>
 						</Button>
 					</Left>
 					<Body>
@@ -498,7 +498,7 @@ export default class Home extends React.Component {
 						<Button transparent onPress={()=> {
 							this.handleRefresh();
 						}}>
-							<Icon type='Entypo' name='cw' />
+							<Icon type='Entypo' name='cw' style={{ color: 'white'}}/>
 						</Button>
 
 						<Button transparent onPress={()=> {
@@ -506,9 +506,9 @@ export default class Home extends React.Component {
 							this.makeRemoteRequest();
 						}}>
 							{this.state.toggleSort ? (
-								<Icon type='Entypo' name='time-slot' />
+								<Icon type='Entypo' name='time-slot' style={{ color: 'white'}}/>
 							) : (
-								<Icon type='Entypo' name='location' />
+								<Icon type='Entypo' name='location' style={{ color: 'white'}}/>
 							)}
 						</Button>
 					</Right>

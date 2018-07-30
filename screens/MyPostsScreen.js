@@ -261,20 +261,21 @@ export default class MyPosts extends Component {
 					</Content>
 				</Modal>
 
-				<Header>
+				<Header
+					style={{backgroundColor: "#567a8d"}}>
 					<Left>
 						<Button transparent onPress={()=>this.props.navigation.openDrawer()}>
-							<Icon type='Entypo' name='menu' />
+							<Icon type='Entypo' name='menu' style={{ color: 'white'}}/>
 						</Button>
 					</Left>
 					<Body>
-						<Title>My Posts</Title>
+						<Title >My Posts</Title>
 					</Body>
 					<Right>
 						<Button transparent onPress={()=> {
 							this.handleRefresh();
 						}}>
-							<Icon type='Entypo' name='cw' />
+							<Icon type='Entypo' name='cw' style={{ color: 'white'}}/>
 						</Button>
 					</Right>
 				</Header>

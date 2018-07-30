@@ -23,10 +23,10 @@ export default class ProfileScreen extends Component {
     return (
       <View style={styles.container}>
           <Header
-            style={{ backgroundColor: "#00BFFF", borderBottomWidth: 0}}>
+            style={{ backgroundColor: "#567a8d", borderBottomWidth: 0}}>
             <Left>
               <Button transparent onPress={()=>this.props.navigation.openDrawer()}>
-                <Icon name='menu' style={{ color: 'black'}}/>
+                <Icon name='menu' style={{ color: 'white'}}/>
               </Button>
             </Left>
             <Body>
@@ -44,9 +44,18 @@ export default class ProfileScreen extends Component {
 
               <TouchableOpacity
               style={styles.buttonContainer}
+              onPress={() =>  this.props.navigation.navigate('MyPost') }
+              >
+              <Text
+                style={styles.buttonText}>View my post</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+              style={styles.buttonContainer}
               onPress={() =>  this.signOutUser() }
               >
-                <Text>Logout</Text>
+                <Text
+                  style={styles.buttonText}>Logout</Text>
               </TouchableOpacity>
             </View>
         </View>
@@ -57,7 +66,7 @@ export default class ProfileScreen extends Component {
 
 const styles = StyleSheet.create({
    header:{
-    backgroundColor: "#00BFFF",
+    backgroundColor: "#567a8d",
     height:200,
   },
   avatar: {
@@ -84,7 +93,7 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   buttonContainer: {
-    marginTop:100,
+    marginTop:25,
     height:45,
     flexDirection: "row",
     justifyContent: 'center',
@@ -92,6 +101,12 @@ const styles = StyleSheet.create({
     alignSelf:'center',
     width:250,
     borderRadius:30,
-    backgroundColor: "#00BFFF",
+    backgroundColor: "#1c313a",
   },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'white',
+    textAlign: 'center'
+  }
 })

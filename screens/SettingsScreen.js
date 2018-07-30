@@ -5,10 +5,11 @@ export default class Settings extends Component {
 	render() {
 		return (
 			<Container>
-				<Header>
+				<Header
+					style={{backgroundColor: "#567a8d"}}>
 					<Left>
 						<Button transparent onPress={()=>this.props.navigation.openDrawer()}>
-							<Icon name='menu' />
+                <Icon name='menu' style={{ color: 'white'}}/>
 						</Button>
 					</Left>
 					<Body>
